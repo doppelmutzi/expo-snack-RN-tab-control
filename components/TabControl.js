@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { arrayOf, string, func, number, bool, node } from "prop-types";
+import { arrayOf, string, func, number, bool, node, shape } from "prop-types";
 import {
   View,
   Text,
@@ -11,10 +11,12 @@ import {
   ViewPropTypes
 } from "react-native";
 
+import * as Haptics from "expo-haptics";
+import { PanGestureHandler } from "react-native-gesture-handler";
+
 import theme from "../theme";
 
 import iosTabControlStyles, {
-  touchableHighlightColors,
   iosTabVerticalSpacing
 } from "./iOSTabControlStyles";
 import androidTabControlStyles from "./androidTabControlStyles";
@@ -40,7 +42,7 @@ const TabControl = ({ values, onChange, renderSeparators }) => {
       <SegmentedControl
         values={values}
         selectedIndex={selectedIndex}
-        onTabPress={handleIndexChange}
+        onIndexChange={handleIndexChange}
         renderSeparators={renderSeparators}
       />
     </View>
@@ -62,7 +64,7 @@ export default TabControl;
 function SegmentedControl({
   values: tabValues,
   selectedIndex,
-  onTabPress,
+  onIndexChange,
   renderSeparators,
 }) {
   return (
@@ -70,12 +72,14 @@ function SegmentedControl({
       style={tabControlStyles}
       numberValues={tabValues.length}
       activeTabIndex={selectedIndex}
+      onIndexChange={onIndexChange}
     >
       {tabValues.map((tabValue, index) => (
         <Tab
           label={tabValue}
           onPress={() => {
-            onTabPress(index);
+            onIndexChange(index);
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
           }}
           isActive={selectedIndex === index}
           isFirst={index === 0}
@@ -90,11 +94,23 @@ function SegmentedControl({
   );
 }
 
+SegmentedControl.propTypes = {
+  values: arrayOf(string).isRequired,
+  onIndexChange: func.isRequired,
+  renderSeparators: bool.isRequired,
+  selectedIndex: number
+};
+
+SegmentedControl.defaultProps = {
+  selectedIndex: 0
+};
+
 function Container({
   children,
   numberValues,
   style,
-  activeTabIndex
+  activeTabIndex,
+  onIndexChange
 }) {
   const { tabStyle, activeTabStyle, tabsContainerStyle } = style;
 
@@ -113,35 +129,47 @@ function Container({
     }).start();
   }, [containerWidth, activeTabIndex]);
 
+  const onGestureEvent = evt => {
+    const tabWidth = containerWidth / numberValues;
+    let index = Math.floor(evt.nativeEvent.x / tabWidth);
+    if (index > numberValues - 1) index = numberValues - 1;
+    else if (index < 0) index = 0;
+    if (index !== activeTabIndex) {
+      onIndexChange(index);
+    }
+  };
+
   return isIos ? (
-    <View
-      style={[
-        {
-          marginHorizontal: margin,
-          flexDirection: "row",
-          position: "relative"
-        },
-        tabsContainerStyle
-      ]}
-      onLayout={event => {
-        setContainerWidth(event.nativeEvent.layout.width);
-      }}
-    >
-      <Animated.View
-        style={{
-          // works too
-          // width: `${100 / numberValues}%`,
-          width: containerWidth / numberValues,
-          left: moveAnimation,
-          top: iosTabVerticalSpacing,
-          bottom: iosTabVerticalSpacing,
-          position: "absolute",
-          ...tabStyle,
-          ...activeTabStyle
+    <PanGestureHandler onGestureEvent={onGestureEvent}>
+      <View
+        style={[
+          {
+            marginHorizontal: margin,
+            flexDirection: "row",
+            position: "relative"
+          },
+          tabsContainerStyle
+        ]}
+        onLayout={event => {
+          setContainerWidth(event.nativeEvent.layout.width);
         }}
-      ></Animated.View>
-      {children}
-    </View>
+      >
+        <Animated.View
+          style={{
+            // works too
+            // width: `${100 / numberValues}%`,
+            width: containerWidth / numberValues,
+            left: moveAnimation,
+            top: iosTabVerticalSpacing,
+            bottom: iosTabVerticalSpacing,
+            position: "absolute",
+            ...tabStyle,
+            ...activeTabStyle
+          }}
+        ></Animated.View>
+        {children}
+      </View>
+    </PanGestureHandler>
   ) : (
     <View
       style={[
@@ -157,7 +185,16 @@ function Container({
 Container.propTypes = {
   children: node.isRequired,
   numberValues: number.isRequired,
-  style: ViewPropTypes.style.isRequired,
+  style: shape({
+    tabsContainerStyle: ViewPropTypes.styles,
+    tabStyle: ViewPropTypes.styles,
+    tabTextStyle: ViewPropTypes.styles,
+    activeTabStyle: ViewPropTypes.styles,
+    activeTabTextStyle: ViewPropTypes.styles,
+    firstTabStyle: ViewPropTypes.styles,
+    lastTabStyle: ViewPropTypes.styles
+  }).isRequired,
+  onIndexChange: func.isRequired,
   activeTabIndex: number
 };
 
@@ -175,16 +212,7 @@ function shouldRenderLeftSeparator(index, selectedIndex) {
   return true;
 }
 
-SegmentedControl.propTypes = {
-  values: arrayOf(string).isRequired,
-  onTabPress: func.isRequired,
-  renderSeparators: bool.isRequired,
-  selectedIndex: number
-};
 
-SegmentedControl.defaultProps = {
-  selectedIndex: 0
-};
 
 const IosTab = ({
   children,

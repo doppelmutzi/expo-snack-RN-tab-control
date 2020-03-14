@@ -1,10 +1,10 @@
 {
   "devToolsPort": 19002,
-  "expoServerPort": null,
-  "packagerPort": null,
-  "packagerPid": null,
-  "expoServerNgrokUrl": null,
-  "packagerNgrokUrl": null,
-  "ngrokPid": null,
+  "expoServerPort": 19000,
+  "packagerPort": 19001,
+  "packagerPid": 42087,
+  "expoServerNgrokUrl": "https://u3-s34.doppelmutzi.expo-snack-tab-control.exp.direct",
+  "packagerNgrokUrl": "https://packager.u3-s34.doppelmutzi.expo-snack-tab-control.exp.direct",
+  "ngrokPid": 42104,
   "webpackServerPort": null
 }
