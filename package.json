@@ -1,8 +1,8 @@
 {
   "name": "tab-control-(segmented-control-on-ios)",
-  "version": "0.0.0",
-  "description": "renders segmented control on iOS devices and tab layout on Android devices.",
-  "author": null,
+  "version": "1.0.0",
+  "description": "renders segmented control on iOS and tab layout on Android.",
+  "author": "Sebastian Weber",
   "private": true,
   "main": "node_modules/expo/AppEntry.js",
   "devDependencies": {
